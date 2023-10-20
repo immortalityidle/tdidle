@@ -174,7 +174,9 @@ enum TowerType {
   TriShot,
   Cluster,
   Rocket,
-  Missile
+  Missile,
+  Cold,
+  Frost
 }
 
 enum Direction {
@@ -209,7 +211,8 @@ enum DamageType {
   Goo,
   Other,
   Acid,
-  Poison
+  Poison,
+  Cold
 }
 
 @Component({
@@ -255,7 +258,7 @@ export class AppComponent implements AfterViewInit{
   creepTypeStrings = ["Normal", "Speedy", "Stacker", "Blob", "Egg Layer", "Shield", "Ghost", "Kinetic Absorber", "Energy Eater", "Boss", "Party!"];
   towerTypeStrings = ["Basic", "Laser", "Bullet", "Bomb", "Heat", "Damage Booster", "Radiation", "Nuclear",
     "Lightning", "Chain Lightning", "Storm", "Stun", "Paralysis", "Energy Ray", "Plasma Ray", "Sniper", "Railgun",
-    "Gatling", "Machine Gun", "Blunderbuss", "Chainshot Cannon", "Goo", "Acid", "Poison", "TriShot", "Cluster", "Rocket", "Missile"];
+    "Gatling", "Machine Gun", "Blunderbuss", "Chainshot Cannon", "Goo", "Acid", "Poison", "TriShot", "Cluster", "Rocket", "Missile", "Cold", "Frost"];
   targetPriorityStrings = ["Creep Closest to Tower", "Creep Closest to Goal", "Strongest Creep", "Weakest Creep"];
   cash = 20;
   waveTokens = 0;
@@ -523,6 +526,24 @@ export class AppComponent implements AfterViewInit{
       range: 5,
       projectileSize: .2,
       projectileSpeed: .05,
+    },
+    {
+      type: TowerType.Cold,
+      fireCooldown: 6000,
+      damage: 0,
+      damageType: DamageType.Cold,
+      range: 1.5,
+      projectileSize: 0,
+      projectileSpeed: 0,
+    },
+    {
+      type: TowerType.Frost,
+      fireCooldown: 2000,
+      damage: 0,
+      damageType: DamageType.Cold,
+      range: 2.5,
+      projectileSize: .1,
+      projectileSpeed: .1,
     },
 
   ];
@@ -1233,6 +1254,8 @@ export class AppComponent implements AfterViewInit{
       for (let status of creep.status){
         if (status.effect == DamageType.Poison){
           this.ctx.fillStyle = "green";
+        } else if (status.effect == DamageType.Cold){
+          this.ctx.fillStyle = "#8888FF";
         }
       }
       this.ctx.fillRect(barX, barY, healthBarLength, healthBarHeight);
@@ -2582,6 +2605,83 @@ export class AppComponent implements AfterViewInit{
       this.ctx.stroke();
       this.ctx.fill();
       this.drawMissile(tower.muzzlePoint, missileBottom, "red");
+    } else if (tower.type == TowerType.Cold){
+      const towerRadius = this.squaresize * .3;
+      const flakeRadius = this.squaresize * .2;
+      const diagonalOffset = flakeRadius * .7
+      this.ctx.lineWidth = towerRadius * .1;
+      this.ctx.fillStyle = 'white';
+      this.ctx.strokeStyle = "#8888FF";
+      this.ctx.beginPath();
+      this.ctx.arc(tower.position.x, tower.position.y, towerRadius, 0, 2 * Math.PI, false);
+      this.ctx.fill();
+      this.ctx.stroke();
+      const p1 = {x: tower.position.x, y: tower.position.y - flakeRadius};
+      const p2 = {x: tower.position.x - flakeRadius, y: tower.position.y};
+      const p3 = {x: tower.position.x, y: tower.position.y + flakeRadius};
+      const p4 = {x: tower.position.x + flakeRadius, y: tower.position.y};
+      const p5 = {x: tower.position.x - diagonalOffset, y: tower.position.y - diagonalOffset};
+      const p6 = {x: tower.position.x - diagonalOffset, y: tower.position.y + diagonalOffset};
+      const p7 = {x: tower.position.x + diagonalOffset, y: tower.position.y + diagonalOffset};
+      const p8 = {x: tower.position.x + diagonalOffset, y: tower.position.y - diagonalOffset};
+      this.ctx.beginPath();
+      this.ctx.moveTo(p1.x, p1.y);
+      this.ctx.lineTo(p3.x, p3.y);
+      this.ctx.stroke();
+      this.ctx.beginPath();
+      this.ctx.moveTo(p2.x, p2.y);
+      this.ctx.lineTo(p4.x, p4.y);
+      this.ctx.stroke();
+      this.ctx.beginPath();
+      this.ctx.moveTo(p5.x, p5.y);
+      this.ctx.lineTo(p7.x, p7.y);
+      this.ctx.stroke();
+      this.ctx.beginPath();
+      this.ctx.moveTo(p6.x, p6.y);
+      this.ctx.lineTo(p8.x, p8.y);
+      this.ctx.stroke();
+    } else if (tower.type == TowerType.Frost){
+      const towerRadius = this.squaresize * .4;
+      const flakeRadius = this.squaresize * .3;
+      const diagonalOffset = flakeRadius * .7
+      const branchOffset = flakeRadius * .9;
+      this.ctx.lineWidth = towerRadius * .1;
+      this.ctx.fillStyle = 'white';
+      this.ctx.strokeStyle = "#8888FF";
+      this.ctx.beginPath();
+      this.ctx.arc(tower.position.x, tower.position.y, towerRadius, 0, 2 * Math.PI, false);
+      this.ctx.fill();
+      this.ctx.stroke();
+      const endPoints = [{x: tower.position.x, y: tower.position.y - flakeRadius},
+        {x: tower.position.x - flakeRadius, y: tower.position.y},
+        {x: tower.position.x, y: tower.position.y + flakeRadius},
+        {x: tower.position.x + flakeRadius, y: tower.position.y},
+        {x: tower.position.x - diagonalOffset, y: tower.position.y - diagonalOffset},
+        {x: tower.position.x - diagonalOffset, y: tower.position.y + diagonalOffset},
+        {x: tower.position.x + diagonalOffset, y: tower.position.y + diagonalOffset},
+        {x: tower.position.x + diagonalOffset, y: tower.position.y - diagonalOffset},
+      ];
+
+      for (const endPoint of endPoints){
+        this.ctx.beginPath();
+        this.ctx.moveTo(tower.position.x, tower.position.y);
+        this.ctx.lineTo(endPoint.x, endPoint.y);
+        this.ctx.stroke();
+        const branchPoint = this.getPointOnLine(tower.position, endPoint, diagonalOffset);
+        const midPoint = this.getPointOnLine(tower.position, endPoint, branchOffset);
+        const p1  = this.getPerpendicularPoint1(midPoint, branchPoint);
+        const p2  = this.getPerpendicularPoint2(midPoint, branchPoint);
+        this.ctx.beginPath();
+        this.ctx.moveTo(branchPoint.x, branchPoint.y);
+        this.ctx.lineTo(p1.x, p1.y);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(branchPoint.x, branchPoint.y);
+        this.ctx.lineTo(p2.x, p2.y);
+        this.ctx.stroke();
+
+      }
+
     }
 
   }
@@ -2770,6 +2870,8 @@ export class AppComponent implements AfterViewInit{
       for (let j = creep.status.length - 1; j >= 0; j--){
         if (creep.status[j].effect == DamageType.Poison){
           this.damageCreep(creep, creep.status[j].power * creep.maxHealth, DamageType.Other);
+        } else if (creep.status[j].effect == DamageType.Cold){
+          speed *= .5;
         }
         creep.status[j].duration -= this.tickMilliseconds;
         if (creep.status[j].duration <= 0){
@@ -2955,7 +3057,15 @@ export class AppComponent implements AfterViewInit{
           const damageMultiplier = this.getDamageMultiplier(tower);
           const damage = tower.damage * damageMultiplier;
 
-          if (tower.type == TowerType.Bomb || tower.type == TowerType.Rocket || tower.type == TowerType.Missile){
+          if (tower.type == TowerType.Bomb || tower.type == TowerType.Rocket || tower.type == TowerType.Missile || tower.type == TowerType.Frost){
+            let blastColor = "red";
+            if (tower.type == TowerType.Frost){
+              blastColor = "#8888FF";
+            }
+            let shape = ProjectileShape.Missile;
+            if (tower.type == TowerType.Bomb || tower.type == TowerType.Frost){
+              shape = ProjectileShape.Round;
+            }
             this.projectiles.push({
               position: tower.muzzlePoint,
               destination: {x: tower.lastTargetPosition.x, y: tower.lastTargetPosition.y},
@@ -2964,9 +3074,9 @@ export class AppComponent implements AfterViewInit{
               damageType: tower.damageType,
               size: tower.projectileSize * this.squaresize,
               blastSize: tower.blastSize * this.squaresize,
-              color: "red",
+              color: blastColor,
               stopOnImpact: false,
-              shape: tower.type == TowerType.Bomb ? ProjectileShape.Round : ProjectileShape.Missile
+              shape: shape
             });
           } else if (tower.type == TowerType.TriShot){
             let p1 = this.getPerpendicularPoint1(tower.lastTargetPosition, tower.position, this.squaresize);
@@ -3089,7 +3199,7 @@ export class AppComponent implements AfterViewInit{
               });
             }
 
-          } else if (tower.type == TowerType.Heat || tower.type == TowerType.Radiation || tower.type == TowerType.Nuclear){
+          } else if (tower.type == TowerType.Heat || tower.type == TowerType.Radiation || tower.type == TowerType.Nuclear || tower.type == TowerType.Cold){
             for (const creep of this.creeps){
               if (this.getDistance(creep.position, tower.position) <= tower.range * this.squaresize){
                 this.damageCreep(creep, damage, tower.damageType);
@@ -3097,6 +3207,8 @@ export class AppComponent implements AfterViewInit{
             }
             if (tower.type == TowerType.Heat){
               this.bombExplosions.push({position: tower.position, size: tower.range * this.squaresize, countdown: 100, color: "yellow"})
+            } else if (tower.type == TowerType.Cold){
+              this.bombExplosions.push({position: tower.position, size: tower.range * this.squaresize, countdown: 100, color: "#8888FF"})
             }
           } else {
             if (tower.target.type == CreepType.Shield && tower.target.deaths < 3){
@@ -3222,7 +3334,7 @@ export class AppComponent implements AfterViewInit{
             }
           }
           // then add an explosion and remove the projectile
-          this.bombExplosions.push({position: projectile.position, size: projectile.blastSize, countdown: 100, color: "red"})
+          this.bombExplosions.push({position: projectile.position, size: projectile.blastSize, countdown: 100, color: projectile.color})
         } else if (impactTarget){
           this.damageCreep(impactTarget, projectile.damage, projectile.damageType);
         } else if (projectile.damageType == DamageType.Goo || projectile.damageType == DamageType.Acid){
@@ -3306,7 +3418,7 @@ export class AppComponent implements AfterViewInit{
     } else if (damageType == DamageType.Goo || damageType == DamageType.Acid){
       this.gooBlobs.push({position: {x: creep.position.x, y: creep.position.y}, duration: 1000, damage: damage, damageType: damageType});
       return;
-    } else if (damageType == DamageType.Poison){
+    } else if (damageType == DamageType.Poison || damageType == DamageType.Cold){
       this.addStatus(creep, {duration: 5000, power: damage, effect: damageType}); // TODO: make duration tied to tower stats somehow
     }
     if ((creep.type == CreepType.KineticAbsorber && damageType == DamageType.Physical) ||
@@ -3662,7 +3774,7 @@ export class AppComponent implements AfterViewInit{
 
     const startPoint = this.getPointFromGridPoint(this.startPosition);
     let blastSize = 0;
-    if (towerType == TowerType.Bomb){
+    if (towerType == TowerType.Bomb || towerType == TowerType.Frost){
       blastSize = 1;
     } else if (towerType == TowerType.Rocket){
       blastSize = 1.2;
